@@ -1,46 +1,52 @@
-const readline = require('readline');
-const compra = require('./utils/compra');
-const venda = require('./utils/venda');
-const { estado, resetarEstado } = require('./utils/estado');
+const fs = require('fs');
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-  terminal: true,
-});
+function processInput(input) {
+  const operations = JSON.parse(input);
+  const resultado = [];
+  let perda = 0;
+  let totalAcoes = 0;
+  let precoMedio = 0;
 
-let linhas = []; 
+  operations.forEach(operation => {
+    const { operation: type, 'unit-cost': unitCost, quantity } = operation;
 
-console.log("Digite suas operações (JSON por linha). Digite 'done' para finalizar:");
+    if (type === 'buy') {
+      precoMedio = ((totalAcoes * precoMedio) + (quantity * unitCost)) / (totalAcoes + quantity);
+      precoMedio = parseFloat(precoMedio.toFixed(2));
+      totalAcoes += quantity;
+      resultado.push({ tax: 0.00 });
+    } else if (type === 'sell') {
+        const vendaTotal = unitCost * quantity;
+        const lucro = (vendaTotal - precoMedio) * quantity;
+        let imposto = 0;
 
-rl.on('line', (linha) => {
-  if (linha.trim().toLowerCase() === 'done') {
-    rl.close(); 
-  } else {
-    linhas.push(linha.trim()); 
-  }
-});
-
-rl.on('close', () => {
-  try {
-    linhas.forEach((conteudo) => {
-      resetarEstado(); 
-      const operacoes = JSON.parse(conteudo); 
-      const resultado = processarOperacoes(operacoes); 
-      console.log(JSON.stringify(resultado)); 
-    });
-  } catch (erro) {
-    console.error('Erro ao processar JSON:', erro.message);
-  }
-});
-
-const processarOperacoes = (operacoes) => {
-  return operacoes.map((operacao) => {
-    const { operation, 'unit-cost': custo, quantity: qtd } = operacao;
-    if (operation === 'buy') {
-      return compra(custo, qtd);
-    } else if (operation === 'sell') {
-      return venda(custo, qtd);
+        if (vendaTotal > 20000 && lucro > 0) {
+          const lucroTributavel = Math.max(0, lucro - perda);
+          imposto = parseFloat(lucroTributavel * 0.2).toFixed(2);
+          perda += lucro
+        } else {
+          perda += lucro;
+        }
+        totalAcoes -= quantity;
+        resultado.push({ tax: parseFloat(imposto) });
     }
   });
-};
+
+  console.log(JSON.stringify(resultado));
+}
+
+if (process.stdin.isTTY) {
+  process.stdin.setEncoding('utf8');
+  process.stdin.on('data', function(data) {
+    processInput(data);
+  });
+} else {
+  let input = '';
+  process.stdin.setEncoding('utf8');
+  process.stdin.on('data', function(chunk) {
+    input += chunk;
+  });
+  process.stdin.on('end', function() {
+    processInput(input);
+  });
+}
