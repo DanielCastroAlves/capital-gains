@@ -1,21 +1,24 @@
 const { estado } = require('./estado');
 
-const venda = (custo, qtd) => {
-  const valorTotal = custo * qtd;
-  const lucro = (custo - estado.precoMedio) * qtd;
+function venda(unitCost, quantity) {
+  const vendaTotal = unitCost * quantity;
+  const lucro = (unitCost - estado.precoMedio) * quantity;
+
+  console.log(`Venda Total: ${vendaTotal}, Lucro: ${lucro}`);
+
   let imposto = 0;
 
-  if (valorTotal > 20000 && lucro > 0) {
-    const lucroTributavel = Math.max(0, lucro + estado.prejuizo);
-    imposto = parseFloat((lucroTributavel * 0.2).toFixed(2));
-    estado.prejuizo = Math.min(0, lucro + estado.prejuizo);
-  } else {
-    estado.prejuizo += lucro;
+  // Corrigido: Calcular imposto em qualquer venda com lucro, sem limite de 20.000
+  if (lucro > 0) {
+    imposto = parseFloat((lucro * 0.2).toFixed(2)); // 20% sobre o lucro
   }
 
-  estado.quantidade -= qtd;
+  estado.quantidade -= quantity;
   estado.historico.push({ tax: imposto });
+
+  console.log(`Estado após venda:`, estado);
+
   return { tax: imposto };
-};
+}
 
 module.exports = venda;

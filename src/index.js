@@ -1,9 +1,28 @@
 const fs = require('fs');
 const readline = require('readline');
+const compra = require('./utils/compra');
+const venda = require('./utils/venda');
+const { resetarEstado, estado } = require('./utils/estado');
+
+function processOperations(operations) {
+  resetarEstado();
+
+  operations.forEach((operation) => {
+    const { operation: tipo, 'unit-cost': custo, quantity: qtd } = operation;
+
+    if (tipo === 'buy') {
+      compra(custo, qtd);
+    } else if (tipo === 'sell') {
+      venda(custo, qtd);
+    }
+  });
+
+  return estado.historico;
+}
 
 function processInput(input) {
   try {
-    const operations = JSON.parse(input.trim()); // Processa a entrada completa como um array JSON
+    const operations = JSON.parse(input.trim());
     const resultado = processOperations(operations);
     console.log(JSON.stringify(resultado));
   } catch (erro) {
@@ -11,65 +30,31 @@ function processInput(input) {
   }
 }
 
-function processOperations(operations) {
-  const resultado = [];
-  let perda = 0;
-  let totalAcoes = 0;
-  let precoMedio = 0;
-
-  operations.forEach((operation) => {
-    const { operation: type, 'unit-cost': unitCost, quantity } = operation;
-
-    if (type === 'buy') {
-      precoMedio = ((totalAcoes * precoMedio) + (quantity * unitCost)) / (totalAcoes + quantity);
-      precoMedio = parseFloat(precoMedio.toFixed(2));
-      totalAcoes += quantity;
-      resultado.push({ tax: 0.00 });
-    } else if (type === 'sell') {
-      const valorVenda = unitCost * quantity;
-      const lucroPorAcao = unitCost - precoMedio;
-      const lucro = lucroPorAcao * quantity;
-
-      let imposto = 0;
-
-      if (valorVenda > 20000 && lucro > 0) {
-        const lucroTributavel = Math.max(0, lucro - perda);
-        imposto = parseFloat((lucroTributavel * 0.2).toFixed(2));
-        perda = Math.max(0, perda - lucro);
-      } else {
-        perda += Math.abs(lucro);
-      }
-
-      totalAcoes -= quantity;
-      resultado.push({ tax: imposto });
-    }
-  });
-
-  return resultado;
-}
-
-const caminhoArquivo = process.argv[2];
+const caminhoArquivo = process.argv[2]; // Arquivo como argumento na linha de comando.
 
 if (caminhoArquivo) {
   try {
-    const input = fs.readFileSync(caminhoArquivo, 'utf8');
-    processInput(input);
+    const input = fs.readFileSync(caminhoArquivo, 'utf8'); // Lê o conteúdo do arquivo.
+    processInput(input); // Processa o conteúdo lido.
   } catch (erro) {
     console.error('Erro ao ler o arquivo:', erro.message);
   }
 } else {
-  let entrada = '';
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
   });
 
-  console.log("Digite suas operações como um array JSON:");
+  console.log('Digite suas operações como um array JSON:');
 
+  let entrada = '';
   rl.on('line', (linha) => {
-    if (linha.trim() === '') rl.close();
-    else entrada += linha.trim();
+    entrada += linha;
   });
 
-  rl.on('close', () => processInput(entrada));
+  rl.on('close', () => {
+    processInput(entrada);
+  });
 }
+
+module.exports = { processOperations, processInput };
