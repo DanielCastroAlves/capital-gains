@@ -1,33 +1,32 @@
-// src/__tests__/utils/venda.test.js
-const venda = require('../../utils/venda');
-const { estado, resetarEstado } = require('../../utils/estado');
+const venda = require("../../utils/venda");
+const { estado, resetarEstado } = require("../../utils/estado");
 
 beforeEach(() => {
-  resetarEstado(); // Garante que o estado esteja limpo para cada teste
-  estado.precoMedio = 10; // Define preço médio inicial
-  estado.quantidade = 100; // Define quantidade inicial de ações
+  resetarEstado();
+  estado.precoMedio = 10;
+  estado.quantidade = 100;
 });
 
-test('Deve calcular corretamente o imposto para uma venda lucrativa', () => {
-  const resultado = venda(50.00, 50); // Venda com lucro
+test("Calcula corretamente o imposto para uma venda lucrativa", () => {
+  const resultado = venda(50.0, 50);
 
-  expect(resultado).toEqual({ tax: 400.00 }); // 20% de (50 - 10) * 50
-  expect(estado.historico).toMatchObject([{ tax: 400.00 }]); // Verifica histórico
-  expect(estado.quantidade).toBe(50); // Verifica quantidade restante
+  expect(resultado).toEqual({ tax: 400.0 });
+  expect(estado.historico).toEqual([{ tax: 400.0 }]);
+  expect(estado.quantidade).toBe(50);
 });
 
-test('Não deve calcular imposto para uma venda abaixo de 20.000', () => {
-  const resultado = venda(10.00, 10); // Venda total de 100 (sem imposto)
+test("Não calcula imposto para uma venda sem lucro", () => {
+  const resultado = venda(10.0, 10);
 
   expect(resultado).toEqual({ tax: 0 });
-  expect(estado.historico).toMatchObject([{ tax: 0 }]); // Verifica histórico
-  expect(estado.quantidade).toBe(90); // Atualiza quantidade corretamente
+  expect(estado.historico).toEqual([{ tax: 0 }]);
+  expect(estado.quantidade).toBe(90);
 });
 
-test('Não deve calcular imposto para uma venda com prejuízo', () => {
-  const resultado = venda(5.00, 50); // Venda com prejuízo
+test("Não calcula imposto para uma venda com prejuízo", () => {
+  const resultado = venda(5.0, 50);
 
   expect(resultado).toEqual({ tax: 0 });
-  expect(estado.historico).toMatchObject([{ tax: 0 }]); // Verifica histórico
-  expect(estado.quantidade).toBe(50); // Verifica quantidade restante
+  expect(estado.historico).toEqual([{ tax: 0 }]);
+  expect(estado.quantidade).toBe(50);
 });

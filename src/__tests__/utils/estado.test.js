@@ -1,12 +1,12 @@
-// src/__tests__/utils/estado.test.js
-const { estado, resetarEstado } = require('../../utils/estado');
+const { estado, resetarEstado } = require("../../utils/estado");
 
-beforeEach(() => {
-  resetarEstado(); // Garante que o estado esteja limpo para cada teste
-});
+beforeEach(() => resetarEstado());
 
-test('Estado inicial deve estar zerado', () => {
-  expect(estado.quantidade).toBe(0);
-  expect(estado.precoMedio).toBe(0);
-  expect(estado.prejuizo).toBe(0);
+test("Estado inicial deve estar zerado", () => {
+  expect(estado).toEqual({
+    quantidade: 0,
+    precoMedio: 0,
+    prejuizo: 0,
+    historico: [],
+  });
 });
