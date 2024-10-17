@@ -1,54 +1,46 @@
 const readline = require('readline');
 const compra = require('./utils/compra');
 const venda = require('./utils/venda');
-const { estadoAcoes, resetarEstado } = require('./utils/estadoAcoes');
+const { estado, resetarEstado } = require('./utils/estado');
 
-const entrada = readline.createInterface({
+const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
+  terminal: true,
 });
 
-const perguntarOperacao = () => {
-  entrada.question('Operação (buy/sell): ', (tipo) => {
-    if (tipo !== 'buy' && tipo !== 'sell') {
-      console.log('Operação inválida. Tente novamente.');
-      return perguntarOperacao();
-    }
+let linhas = []; 
 
-    entrada.question('Preço unitário: ', (preco) => {
-      const valor = parseFloat(preco);
-      if (isNaN(valor) || valor <= 0) {
-        console.log('Preço inválido. Tente novamente.');
-        return perguntarOperacao();
-      }
+console.log("Digite suas operações (JSON por linha). Digite 'done' para finalizar:");
 
-      entrada.question('Quantidade: ', (quantidade) => {
-        const qtd = parseInt(quantidade, 10);
-        if (isNaN(qtd) || qtd <= 0) {
-          console.log('Quantidade inválida. Tente novamente.');
-          return perguntarOperacao();
-        }
+rl.on('line', (linha) => {
+  if (linha.trim().toLowerCase() === 'done') {
+    rl.close(); 
+  } else {
+    linhas.push(linha.trim()); 
+  }
+});
 
-        if (tipo === 'buy') {
-          compra(valor, qtd);
-        } else if (tipo === 'sell') {
-          venda(valor, qtd);
-        }
-
-        console.log('Estado atual:', estadoAcoes.historico);
-
-        entrada.question('Deseja realizar outra operação? (s/n): ', (resposta) => {
-          if (resposta.toLowerCase() === 's') {
-            perguntarOperacao();
-          } else {
-            console.log('Resultado final:', JSON.stringify(estadoAcoes.historico));
-            entrada.close();
-          }
-        });
-      });
+rl.on('close', () => {
+  try {
+    linhas.forEach((conteudo) => {
+      resetarEstado(); 
+      const operacoes = JSON.parse(conteudo); 
+      const resultado = processarOperacoes(operacoes); 
+      console.log(JSON.stringify(resultado)); 
     });
+  } catch (erro) {
+    console.error('Erro ao processar JSON:', erro.message);
+  }
+});
+
+const processarOperacoes = (operacoes) => {
+  return operacoes.map((operacao) => {
+    const { operation, 'unit-cost': custo, quantity: qtd } = operacao;
+    if (operation === 'buy') {
+      return compra(custo, qtd);
+    } else if (operation === 'sell') {
+      return venda(custo, qtd);
+    }
   });
 };
-
-resetarEstado();
-perguntarOperacao();

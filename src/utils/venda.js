@@ -1,21 +1,21 @@
-const { estadoAcoes } = require('./estadoAcoes');
+const { estado } = require('./estado');
 
-const venda = (valorDeVenda, quantidadeVendida) => {
-  const valorTotal = valorDeVenda * quantidadeVendida;
-  const lucro = (valorDeVenda - estadoAcoes.precoMedio) * quantidadeVendida;
-
+const venda = (custo, qtd) => {
+  const valorTotal = custo * qtd;
+  const lucro = (custo - estado.precoMedio) * qtd;
   let imposto = 0;
 
   if (valorTotal > 20000 && lucro > 0) {
-    const lucroTributavel = Math.max(0, lucro + estadoAcoes.prejuizo);
+    const lucroTributavel = Math.max(0, lucro + estado.prejuizo);
     imposto = parseFloat((lucroTributavel * 0.2).toFixed(2));
-    estadoAcoes.prejuizo = Math.min(0, lucro + estadoAcoes.prejuizo);
+    estado.prejuizo = Math.min(0, lucro + estado.prejuizo);
   } else {
-    estadoAcoes.prejuizo += lucro;
+    estado.prejuizo += lucro;
   }
 
-  estadoAcoes.quantidade -= quantidadeVendida;
-  estadoAcoes.historico.push({ tax: imposto });
+  estado.quantidade -= qtd;
+  estado.historico.push({ tax: imposto });
+  return { tax: imposto };
 };
 
 module.exports = venda;
