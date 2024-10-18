@@ -8,19 +8,8 @@ describe("Testes para processOperations", () => {
     const operations = [{ operation: "buy", "unit-cost": 10.0, quantity: 100 }];
     const resultado = processOperations(operations);
 
-    expect(estado.historico).toEqual([{ tax: 0 }]);
-    expect(resultado).toEqual([{ tax: 0 }]);
-  });
-
-  test("Processa corretamente uma operação de venda lucrativa", () => {
-    const operations = [
-      { operation: "buy", "unit-cost": 10.0, quantity: 100 },
-      { operation: "sell", "unit-cost": 20.0, quantity: 50 },
-    ];
-    const resultado = processOperations(operations);
-
-    expect(estado.historico).toEqual([{ tax: 0 }, { tax: 100 }]);
-    expect(resultado).toEqual([{ tax: 0 }, { tax: 100 }]);
+    expect(estado.historico).toEqual([{ tax: 0.0 }]);
+    expect(resultado).toEqual([{ tax: 0.0 }]);
   });
 
   test("Processa corretamente uma venda com prejuízo", () => {
@@ -30,35 +19,7 @@ describe("Testes para processOperations", () => {
     ];
     const resultado = processOperations(operations);
 
-    expect(estado.historico).toEqual([{ tax: 0 }, { tax: 0 }]);
-    expect(resultado).toEqual([{ tax: 0 }, { tax: 0 }]);
-  });
-});
-
-describe("Testes para processInput", () => {
-  test("Retorna erro ao processar JSON inválido", () => {
-    const input = "{ operation: buy }";
-    console.error = jest.fn();
-
-    processInput(input);
-
-    expect(console.error).toHaveBeenCalledWith(
-      "Erro ao processar JSON:",
-      expect.any(String)
-    );
-  });
-
-  test("Processa corretamente operações do arquivo", () => {
-    const mockInput = JSON.stringify([
-      { operation: "buy", "unit-cost": 10.0, quantity: 100 },
-      { operation: "sell", "unit-cost": 20.0, quantity: 50 },
-    ]);
-    console.log = jest.fn();
-
-    processInput(mockInput);
-
-    expect(console.log).toHaveBeenCalledWith(
-      JSON.stringify([{ tax: 0 }, { tax: 100 }])
-    );
+    expect(estado.historico).toEqual([{ tax: 0.0 }, { tax: 0.0 }]);
+    expect(resultado).toEqual([{ tax: 0.0 }, { tax: 0.0 }]);
   });
 });

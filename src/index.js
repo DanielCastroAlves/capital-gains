@@ -1,25 +1,62 @@
 const fs = require("fs");
 const readline = require("readline");
-const compra = require("./utils/compra");
-const venda = require("./utils/venda");
 const { resetarEstado, estado } = require("./utils/estado");
+
+function compra(preco, quantidade) {
+  const totalAtual = estado.quantidade * estado.precoMedio;
+  const novoTotal = preco * quantidade;
+  estado.quantidade += quantidade;
+  estado.precoMedio = (totalAtual + novoTotal) / estado.quantidade;
+  estado.historico.push({ tax: parseFloat((0).toFixed(2)) });
+}
+
+function vendaComImposto(precoVenda, qtdVenda) {
+  const valorVenda = precoVenda * qtdVenda;
+  const custoVenda = estado.precoMedio * qtdVenda;
+  const lucro = valorVenda - custoVenda;
+
+  let imposto = 0;
+
+  if (valorVenda > 20000 && lucro > 0) {
+    const lucroTributavel = Math.max(0, lucro - estado.prejuizo);
+    imposto = lucroTributavel * 0.2;
+    estado.prejuizo = Math.max(0, estado.prejuizo - lucro);
+  } else if (lucro < 0) {
+    estado.prejuizo += Math.abs(lucro);
+  }
+
+  estado.quantidade -= qtdVenda;
+  estado.historico.push({ tax: parseFloat(imposto.toFixed(2)) });
+}
 
 function processOperations(operations) {
   resetarEstado();
-  operations.forEach(
-    ({ operation: tipo, "unit-cost": custo, quantity: qtd }) => {
-      if (tipo === "buy") compra(custo, qtd);
-      if (tipo === "sell") venda(custo, qtd);
-    }
+  operations.forEach(({ operation, "unit-cost": custo, quantity }) => {
+    if (operation === "buy") compra(custo, quantity);
+    if (operation === "sell") vendaComImposto(custo, quantity);
+  });
+
+  return estado.historico.map((item) => ({
+    tax: Number(item.tax.toFixed(2)),
+  }));
+}
+
+function formatOutput(output) {
+  return JSON.stringify(output).replace(
+    /"tax":(\d+(\.\d+)?)/g,
+    (_, number) => `"tax":${parseFloat(number).toFixed(2)}`
   );
-  return estado.historico;
 }
 
 function processInput(input) {
   try {
-    const operations = JSON.parse(input.trim());
-    const resultado = processOperations(operations);
-    console.log(JSON.stringify(resultado));
+    const blocks = input.match(/\[.*?\]/g) || [];
+    blocks.forEach((block) => {
+      const operations = JSON.parse(block);
+      const resultado = processOperations(operations);
+
+      console.log(formatOutput(resultado));
+    });
   } catch (erro) {
     console.error("Erro ao processar JSON:", erro.message);
   }
@@ -40,15 +77,22 @@ if (caminhoArquivo) {
     output: process.stdout,
   });
 
-  console.log("Digite suas operações como um array JSON:");
+  console.log(
+    "Digite suas operações como um array JSON (linha vazia para finalizar):"
+  );
   let entrada = "";
 
   rl.on("line", (linha) => {
-    entrada += linha;
+    if (linha.trim() === "") {
+      rl.close();
+    } else {
+      entrada += linha;
+    }
   });
 
   rl.on("close", () => {
     processInput(entrada);
+    process.exit(0);
   });
 }
 
