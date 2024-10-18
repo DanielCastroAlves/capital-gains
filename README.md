@@ -59,6 +59,21 @@ Repositório oficial: [GitHub - DanielCastroAlves/capital-gains](https://github.
 
 ---
 
+## Docker
+- O projeto inclui um `Dockerfile` para facilitar a construção e execução da aplicação em um ambiente contêinerizado. Para construir a imagem Docker, execute:
+
+```bash
+docker build -t capital-gains .
+```
+
+E para executar a aplicação, utilize:
+
+```bash
+docker run -it -v "$(pwd):/app" -w /app capital-gains node src/index.js < src/tests/input-teste.txt
+```
+
+---
+
 ## Como Compilar e Executar o Projeto
 
 ### Pré-requisitos
